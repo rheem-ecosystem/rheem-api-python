@@ -1,5 +1,5 @@
 from api.Operator import Operator
-
+from graph.Graph import Graph
 
 class DataQuanta:
 
@@ -53,7 +53,7 @@ class DataQuanta:
     def __run(self, consumer):
         consumer(self.operator.getIterator())
 
-    #def create_graph(self):
-     #   graph = Graph()
-      #  graph.create(sinks)
-       # return graph
+    def create_graph(self):
+        graph = Graph()
+        graph.create(self.plan.sinks)
+        return graph
