@@ -2,6 +2,8 @@ from api.DataQuantaBuilder import DataQuantaBuilder
 from rheemplan.PlanDescriptor import PlanDescriptor
 from graph.Transversal import Transversal
 import collections
+import cloudpickle
+import pickle
 
 if __name__ == '__main__':
 
@@ -12,26 +14,12 @@ if __name__ == '__main__':
     rheem = DataQuantaBuilder(plan)
 
     graph = rheem.source([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) \
-            .filter(lambda x: x % 2 == 0) \
-            .map(lambda y: y * 2) \
-            .create_graph()
-            #.console()
+        .filter(lambda x: x % 2 == 0) \
+        .map(lambda y: y * 2) \
+        .create_graph()
 
-    print(plan.boundary_operators)
-    print("sources")
-    for s in plan.sources:
-        print(s.kind)
-    print("sinks")
-    for s in plan.sinks:
-        print(s.kind)
 
-    def d(x, y, z):
-        if not y:
-            y = 1
-        else:
-            y += 1
-        print("UDF: iteration ", y, " in ", x.kind)
-        return y
+    # .console()
 
     def define_pipelines(node1, current_pipeline, collection):
 
@@ -47,31 +35,23 @@ if __name__ == '__main__':
             else:
                 return False
 
-        print("printing collection")
-        for i in collection:
-            if not i:
-                print("vacio")
-            else:
-                for j in i:
-                    print("elem ", j.kind)
-
         if not current_pipeline:
             current_pipeline = [node1]
-            print("current case 1: ", current_pipeline)
+
         elif node1.operator.is_boundary:
             store_unique(current_pipeline.copy())
             current_pipeline.clear()
             current_pipeline.append(node1)
-            print("current case 2: ", current_pipeline)
+
         else:
             current_pipeline.append(node1)
-            print("current case 3: ", current_pipeline)
 
         if node1.operator.sink:
             store_unique(current_pipeline.copy())
             current_pipeline.clear()
-        print("concatenating: ", node1.operator.kind, " ", len(current_pipeline))
+
         return current_pipeline
+
 
     # Works over the graph
     trans = Transversal(
@@ -87,8 +67,27 @@ if __name__ == '__main__':
 
     collected = trans.get_collected_data()
 
-    print("col: ", len(collected))
+    stages = []
     for pipe in collected:
         print("separador")
+        seq_udf = []
         for node in pipe:
-            print(node.kind)
+            print(node.id, "getting serialized operator", node.operator.udf)
+
+            # SOURCE es distinto, no tiene UDF
+            seq_udf.append(cloudpickle.dumps(node.operator.udf))
+        stages.append(seq_udf.copy())
+
+    for stage in stages:
+
+        for ser_udf in stage:
+            print("deserializing operator")
+            udf = pickle.loads(ser_udf)
+            print(udf)
+
+
+    # print("col: ", len(collected))
+    # for pipe in collected:
+    #    print("separador")
+    #    for node in pipe:
+    #        print(node.id)

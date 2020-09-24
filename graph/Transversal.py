@@ -19,7 +19,7 @@ class Transversal:
 
         # Transversal debe ejecutar desde cada source, debe manejar una lista de binaries concatenados
         for operator in iter(origin):
-            print("operator: ", operator.id)
+            #print("operator: ", operator.id)
             node = graph.get_node(operator.id)
             self.app.visit_node(
                 node=node,

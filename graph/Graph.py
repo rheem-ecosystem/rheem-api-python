@@ -32,12 +32,12 @@ class Graph:
         self.graph[id] = new_node
 
     def add_link(self, id_child, id_parent, e):
-        print("id_child: ", id_child)
-        print("id_parent: ", id_parent)
+        #print("id_child: ", id_child)
+        #print("id_parent: ", id_parent)
         if id_child in self.nodes:
-            print("existe hijo")
+            #print("existe hijo")
             if id_parent in self.nodes:
-                print("existe padre")
+                #print("existe padre")
                 self.graph[id_child].add_predecessor(id_parent, e)
                 self.graph[id_parent].add_successor(id_child, e)
 
@@ -51,5 +51,5 @@ class Graph:
                 print("Hijo: ", self.graph[key2].kind, " - ", self.graph[key].successors[key2], " - ", key2)
 
     def get_node(self, id):
-        print("looking for id: ", id)
+        #print("looking for id: ", id)
         return self.graph[id]
