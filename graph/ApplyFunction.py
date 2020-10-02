@@ -3,8 +3,8 @@ from graph.Visitor import Visitor
 
 class ApplyFunction(Visitor):
 
-    def __init__(self, collection, graph):
-        self.collection = collection
+    def __init__(self, graph, results):
+        self.collection = results
         self.graph = graph
 
     # UDF can store results in ApplyFunction.collection whenever its requires.

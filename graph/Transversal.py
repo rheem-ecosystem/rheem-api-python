@@ -7,7 +7,7 @@ class Transversal:
         self.graph = graph
         self.origin = origin
         self.udf = udf
-        self.app = ApplyFunction([], graph)
+        self.app = ApplyFunction(graph, [])
 
         if origin[0].source:
             self.orientation = "successors"
@@ -19,7 +19,7 @@ class Transversal:
 
         # Transversal debe ejecutar desde cada source, debe manejar una lista de binaries concatenados
         for operator in iter(origin):
-            #print("operator: ", operator.id)
+            print("operator: ", operator.id)
             node = graph.get_node(operator.id)
             self.app.visit_node(
                 node=node,
@@ -30,3 +30,5 @@ class Transversal:
 
     def get_collected_data(self):
         return self.app.get_collection()
+
+    #class Results

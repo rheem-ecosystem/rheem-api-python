@@ -5,7 +5,77 @@ import collections
 import cloudpickle
 import pickle
 
+
+def pipeline_func(fun1, fun2):
+    def execute(iterator):
+       return fun1(fun2(iterator))
+    return execute
+
+def separate_stages(collected):
+    stages = []
+    for pipe in collected:
+        print("separador")
+        last = None
+        for node in reversed(pipe):
+            if node.operator.udf is not None:
+                if node.operator.is_sink():
+                    print(node.id, "Ignoring", node.operator.udf)
+                    pass
+                elif last is not None:
+                    print(node.id, "getting serialized udf", node.operator.udf)
+                    last = pipeline_func(last, node.operator.udf)
+                else:
+                    print(node.id, "getting serialized udf", node.operator.udf)
+                    last = node.operator.udf
+        # At this point, last is the cncatenation of every operator in the pipe
+        print(last)
+
+        stages.append(cloudpickle.dumps(last))
+    i = 0
+    for s in stages:
+        i += 1
+        func = pickle.loads(s)
+        for i in func([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]):
+            print(i)
+
+    print("col: ", len(collected))
+    for pipe in collected:
+        print("separador")
+        for node in pipe:
+            print(node.id)
+
+    return stages
+
+def map_partition(collected):
+    for pipe in collected:
+        print("separador")
+        last = None
+        sources = []
+        sinks = []
+        for node in reversed(pipe):
+            if node.operator.udf is not None:
+                if node.operator.is_sink():
+                    print(node.id, "Ignoring", node.operator.udf)
+                    sinks.append(node.operator)
+                    pass
+                elif node.operator.is_source():
+                    print(node.id, "Ignoring", node.operator.udf)
+                    sources.append(node.operator)
+                    pass
+                elif last is not None:
+                    print(node.id, "getting serialized udf", node.operator.udf)
+                    last = pipeline_func(last, node.operator.udf)
+                else:
+                    print(node.id, "getting serialized udf", node.operator.udf)
+                    last = node.operator.udf
+        # At this point, last is the cncatenation of every operator in the pipe
+        print(last)
+
+    pass
+
 if __name__ == '__main__':
+
+    use_graph = 1
 
     # Plan will contain general info about the Rheem Plan created here
     plan = PlanDescriptor()
@@ -16,78 +86,64 @@ if __name__ == '__main__':
     graph = rheem.source([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) \
         .filter(lambda x: x % 2 == 0) \
         .map(lambda y: y * 2) \
+        .sink(path="/Users/rodrigopardomeza/PycharmProjects/pyrheem/results/" + "sinktest.txt", end="\n") \
         .create_graph()
+        #.execute()
+        #.console()
 
+    op2 = """graph = rheem.source("/Users/rodrigopardomeza/PycharmProjects/rheem-python/python-api/Operator.py") \
+        .filter(lambda s: "class" in s) \
+        .sink(path="/Users/rodrigopardomeza/PycharmProjects/pyrheem/results/" + "fromtexttest.txt", end="") \
+        .create_graph()"""
+        #.execute()
 
-    # .console()
+    if use_graph == 1:
+        def define_pipelines(node1, current_pipeline, collection):
+            def store_unique(pipe_to_insert):
+                for pipe in collection:
+                    if equivalent_lists(pipe, pipe_to_insert):
+                        return
+                collection.append(pipe_to_insert)
 
-    def define_pipelines(node1, current_pipeline, collection):
+            def equivalent_lists(l1, l2):
+                if collections.Counter(l1) == collections.Counter(l2):
+                    return True
+                else:
+                    return False
 
-        def store_unique(pipe_to_insert):
-            for pipe in collection:
-                if equivalent_lists(pipe, pipe_to_insert):
-                    return
-            collection.append(pipe_to_insert)
+            if not current_pipeline:
+                current_pipeline = [node1]
 
-        def equivalent_lists(l1, l2):
-            if collections.Counter(l1) == collections.Counter(l2):
-                return True
+            elif node1.operator.is_boundary:
+                store_unique(current_pipeline.copy())
+                current_pipeline.clear()
+                current_pipeline.append(node1)
+
             else:
-                return False
+                current_pipeline.append(node1)
 
-        if not current_pipeline:
-            current_pipeline = [node1]
+            if node1.operator.sink:
+                store_unique(current_pipeline.copy())
+                current_pipeline.clear()
 
-        elif node1.operator.is_boundary:
-            store_unique(current_pipeline.copy())
-            current_pipeline.clear()
-            current_pipeline.append(node1)
-
-        else:
-            current_pipeline.append(node1)
-
-        if node1.operator.sink:
-            store_unique(current_pipeline.copy())
-            current_pipeline.clear()
-
-        return current_pipeline
+            return current_pipeline
 
 
-    # Works over the graph
-    trans = Transversal(
-        graph=graph,
-        origin=plan.sources,
-        # udf=lambda x, y, z: d(x, y, z)
-        # UDF always will receive:
-        # x: a Node object,
-        # y: an object representing the result of the last iteration,
-        # z: a collection to store final results inside your UDF
-        udf=lambda x, y, z: define_pipelines(x, y, z)
-    )
+        # Works over the graph
+        trans = Transversal(
+            graph=graph,
+            origin=plan.sources,
+            # udf=lambda x, y, z: d(x, y, z)
+            # UDF always will receive:
+            # x: a Node object,
+            # y: an object representing the result of the last iteration,
+            # z: a collection to store final results inside your UDF
+            udf=lambda x, y, z: define_pipelines(x, y, z)
+        )
 
-    collected = trans.get_collected_data()
+        collected = trans.get_collected_data()
 
-    stages = []
-    for pipe in collected:
-        print("separador")
-        seq_udf = []
-        for node in pipe:
-            print(node.id, "getting serialized operator", node.operator.udf)
-
-            # SOURCE es distinto, no tiene UDF
-            seq_udf.append(cloudpickle.dumps(node.operator.udf))
-        stages.append(seq_udf.copy())
-
-    for stage in stages:
-
-        for ser_udf in stage:
-            print("deserializing operator")
-            udf = pickle.loads(ser_udf)
-            print(udf)
+        separate_stages(collected)
 
 
-    # print("col: ", len(collected))
-    # for pipe in collected:
-    #    print("separador")
-    #    for node in pipe:
-    #        print(node.id)
+        # Quitar filter como boundary, guardar las en map partition

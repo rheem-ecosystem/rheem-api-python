@@ -1,6 +1,7 @@
 from api.Operator import Operator
 from graph.Graph import Graph
 
+
 class DataQuanta:
 
     def __init__(self, operator=None, plan=None):
@@ -20,7 +21,7 @@ class DataQuanta:
                 kind="map",
                 udf=func,
                 previous=self.operator,
-                sink=True,
+                #sink=True,
                 boundary_operators=self.plan.get_boundary_operators()
             ),
             plan=self.plan
@@ -35,6 +36,28 @@ class DataQuanta:
                 kind="filter",
                 udf=func,
                 previous=self.operator,
+                #sink=True,
+                boundary_operators=self.plan.get_boundary_operators()
+            ),
+            plan=self.plan
+        )
+
+    def sink(self, path, end="\n"):
+        def consume(iterator):
+            with open(path, 'w') as f:
+                for x in iterator:
+                    f.write(str(x) + end)
+
+        def func(iterator):
+            return self.__run(consume)
+        #self.__run(consume)
+
+        return DataQuanta(
+            Operator(
+                kind="sink",
+                udf=func,
+                previous=self.operator,
+                sink=True,
                 boundary_operators=self.plan.get_boundary_operators()
             ),
             plan=self.plan
@@ -53,7 +76,12 @@ class DataQuanta:
     def __run(self, consumer):
         consumer(self.operator.getIterator())
 
+    def execute(self):
+        print(self.operator.previous[0].kind)
+        self.operator.udf(self.operator.previous[0].getIterator())
+
     def create_graph(self):
         graph = Graph()
+        # what happens when the plan does not have any sink operator
         graph.create(self.plan.sinks)
         return graph
