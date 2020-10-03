@@ -1,0 +1,40 @@
+syntax="proto2";
+
+message OperatorSeed{
+  optional int64 id = 1;
+  optional string kind = 2;
+  optional bytes udf = 3;
+  //optional string iterator = 4;
+
+  message Slot{
+    optional OperatorSeed id = 1;
+  }
+
+  message InputSlot{
+    optional OperatorSeed owner = 1;
+    optional Slot occupant = 2;
+  }
+
+  message OutputSlot{
+    optional OperatorSeed owner = 1;
+    optional Slot occupant = 2;
+  }
+
+  repeated InputSlot input_slots = 4;
+  repeated OutputSlot output_slots = 5;
+}
+
+message RheemPlan{
+  repeated OperatorSeed operators = 1;
+}
+
+message RheemContext{
+
+  enum Platform{
+    spark = 0;
+    java = 1;
+    python = 2;
+  }
+
+  repeated Platform platforms = 1;
+}

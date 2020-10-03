@@ -22,7 +22,8 @@ class DataQuanta:
                 udf=func,
                 previous=self.operator,
                 #sink=True,
-                boundary_operators=self.plan.get_boundary_operators()
+                boundary_operators=self.plan.get_boundary_operators(),
+                wrapper="Function(u,t)"
             ),
             plan=self.plan
         )
@@ -37,7 +38,8 @@ class DataQuanta:
                 udf=func,
                 previous=self.operator,
                 #sink=True,
-                boundary_operators=self.plan.get_boundary_operators()
+                boundary_operators=self.plan.get_boundary_operators(),
+                wrapper="Predicate<u>"
             ),
             plan=self.plan
         )

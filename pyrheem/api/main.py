@@ -1,6 +1,8 @@
 from api.DataQuantaBuilder import DataQuantaBuilder
+from api.Operator import Operator       #quitar, mover
 from rheemplan.PlanDescriptor import PlanDescriptor
 from graph.Transversal import Transversal
+from api.RheemMessageBuilder import RheemMessageBuilder     #quitar, mover
 import collections
 import cloudpickle
 import pickle
@@ -46,21 +48,24 @@ def separate_stages(collected):
 
     return stages
 
-def map_partition(collected):
+def map_partition(collected, plan):
+
+    last = None
+    sources = []
+    sinks = []
     for pipe in collected:
         print("separador")
         last = None
         sources = []
         sinks = []
         for node in reversed(pipe):
-            if node.operator.udf is not None:
+            if node.operator.is_source():
+                print(node.id, "Ignoring", node.operator.udf)
+                sources.append(node.operator)
+            elif node.operator.udf is not None:
                 if node.operator.is_sink():
                     print(node.id, "Ignoring", node.operator.udf)
                     sinks.append(node.operator)
-                    pass
-                elif node.operator.is_source():
-                    print(node.id, "Ignoring", node.operator.udf)
-                    sources.append(node.operator)
                     pass
                 elif last is not None:
                     print(node.id, "getting serialized udf", node.operator.udf)
@@ -68,8 +73,45 @@ def map_partition(collected):
                 else:
                     print(node.id, "getting serialized udf", node.operator.udf)
                     last = node.operator.udf
+                pass
         # At this point, last is the cncatenation of every operator in the pipe
-        print(last)
+        print("last", last)
+    print("last last", last)
+    source = None
+    sink = None
+    for x in sources:
+        print("source", x.kind)
+        source = Operator(
+            kind="source",
+            udf=cloudpickle.dumps(x.udf),
+            previous=None,
+            boundary_operators=plan.get_boundary_operators(),
+        )
+    op_pipe = Operator(
+        kind="composite",
+        udf=cloudpickle.dumps(last),
+        previous=source,
+        boundary_operators=plan.get_boundary_operators()
+    )
+    for x in sinks:
+        print("sink", x.kind)
+        sink = Operator(
+            kind="sink",
+            udf=cloudpickle.dumps(x.udf),
+            previous=op_pipe,
+            boundary_operators=plan.get_boundary_operators(),
+            sink=True
+        )
+
+    source.set_successor(op_pipe)
+    op_pipe.set_predecessor(source)
+    op_pipe.set_successor(sink)
+    sink.set_predecessor(op_pipe)
+
+    operators = [source, op_pipe, sink]
+
+    rmb = RheemMessageBuilder(operators)
+
 
     pass
 
@@ -83,18 +125,18 @@ if __name__ == '__main__':
     # We need to save somewhere the sinks and the sources of the plan
     rheem = DataQuantaBuilder(plan)
 
-    graph = rheem.source([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) \
+    op2 = """graph = rheem.source([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]) \
         .filter(lambda x: x % 2 == 0) \
         .map(lambda y: y * 2) \
         .sink(path="/Users/rodrigopardomeza/PycharmProjects/pyrheem/results/" + "sinktest.txt", end="\n") \
-        .create_graph()
+        .create_graph()"""
         #.execute()
         #.console()
 
-    op2 = """graph = rheem.source("/Users/rodrigopardomeza/PycharmProjects/rheem-python/python-api/Operator.py") \
+    graph = rheem.source("/Users/rodrigopardomeza/PycharmProjects/rheem-python/python-api/Operator.py") \
         .filter(lambda s: "class" in s) \
         .sink(path="/Users/rodrigopardomeza/PycharmProjects/pyrheem/results/" + "fromtexttest.txt", end="") \
-        .create_graph()"""
+        .create_graph()
         #.execute()
 
     if use_graph == 1:
@@ -143,7 +185,6 @@ if __name__ == '__main__':
 
         collected = trans.get_collected_data()
 
-        separate_stages(collected)
-
+        map_partition(collected, plan)
 
         # Quitar filter como boundary, guardar las en map partition

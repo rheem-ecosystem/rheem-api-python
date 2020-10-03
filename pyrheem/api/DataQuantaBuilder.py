@@ -14,6 +14,7 @@ class DataQuantaBuilder:
         return DataQuanta(
             Operator(
                 kind="source",
+                udf=source,
                 iterator=iter(source_ori),
                 boundary_operators=self.plan.get_boundary_operators()
             ),
