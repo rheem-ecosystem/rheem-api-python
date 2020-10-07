@@ -18,17 +18,21 @@ def separate_stages(collected):
     for pipe in collected:
         print("separador")
         last = None
+        wrapper = ""
         for node in reversed(pipe):
             if node.operator.udf is not None:
                 if node.operator.is_sink():
                     print(node.id, "Ignoring", node.operator.udf)
-                    pass
+                    last = node.operator.udf
+                    wrapper = node.operator.wrapper
                 elif last is not None:
                     print(node.id, "getting serialized udf", node.operator.udf)
                     last = pipeline_func(last, node.operator.udf)
+                    wrapper += "," + node.operator.wrapper
                 else:
                     print(node.id, "getting serialized udf", node.operator.udf)
                     last = node.operator.udf
+                    wrapper = node.operator.wrapper
         # At this point, last is the cncatenation of every operator in the pipe
         print(last)
 
@@ -53,9 +57,11 @@ def map_partition(collected, plan):
     last = None
     sources = []
     sinks = []
+    wrapper = ""
     for pipe in collected:
         print("separador")
         last = None
+        wrapper = ""
         sources = []
         sinks = []
         for node in reversed(pipe):
@@ -70,9 +76,11 @@ def map_partition(collected, plan):
                 elif last is not None:
                     print(node.id, "getting serialized udf", node.operator.udf)
                     last = pipeline_func(last, node.operator.udf)
+                    wrapper += "|" + node.operator.wrapper
                 else:
                     print(node.id, "getting serialized udf", node.operator.udf)
                     last = node.operator.udf
+                    wrapper = node.operator.wrapper
                 pass
         # At this point, last is the cncatenation of every operator in the pipe
         print("last", last)
@@ -86,12 +94,14 @@ def map_partition(collected, plan):
             udf=cloudpickle.dumps(x.udf),
             previous=None,
             boundary_operators=plan.get_boundary_operators(),
+            wrapper=x.wrapper
         )
     op_pipe = Operator(
         kind="composite",
         udf=cloudpickle.dumps(last),
         previous=source,
-        boundary_operators=plan.get_boundary_operators()
+        boundary_operators=plan.get_boundary_operators(),
+        wrapper=wrapper
     )
     for x in sinks:
         print("sink", x.kind)
@@ -100,7 +110,8 @@ def map_partition(collected, plan):
             udf=cloudpickle.dumps(x.udf),
             previous=op_pipe,
             boundary_operators=plan.get_boundary_operators(),
-            sink=True
+            sink=True,
+            wrapper=x.wrapper
         )
 
     source.set_successor(op_pipe)
@@ -135,9 +146,11 @@ if __name__ == '__main__':
 
     graph = rheem.source("/Users/rodrigopardomeza/PycharmProjects/rheem-python/python-api/Operator.py") \
         .filter(lambda s: "class" in s) \
-        .sink(path="/Users/rodrigopardomeza/PycharmProjects/pyrheem/results/" + "fromtexttest.txt", end="") \
+        .map(lambda s: "papurri " + s) \
+        .sink(path="/Users/rodrigopardomeza/scalytics/rheem-api-python/pyrheem/localresults/localtest.txt", end="") \
         .create_graph()
         #.execute()
+
 
     if use_graph == 1:
         def define_pipelines(node1, current_pipeline, collection):
