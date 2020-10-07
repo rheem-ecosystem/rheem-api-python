@@ -3,20 +3,26 @@ syntax="proto2";
 message OperatorSeed{
   optional int64 id = 1;
   optional string kind = 2;
-  optional bytes udf = 3;
   //optional string iterator = 4;
 
+  message Udf{
+    optional bytes function = 1;
+    optional string wrapper = 2;
+  }
+
+  optional Udf udf = 3;
+
   message Slot{
-    optional OperatorSeed id = 1;
+    optional int64 occupant_id = 1;
   }
 
   message InputSlot{
-    optional OperatorSeed owner = 1;
+    optional int64 owner_id = 1;
     optional Slot occupant = 2;
   }
 
   message OutputSlot{
-    optional OperatorSeed owner = 1;
+    optional int64 owner_id = 1;
     optional Slot occupant = 2;
   }
 
@@ -37,4 +43,9 @@ message RheemContext{
   }
 
   repeated Platform platforms = 1;
+}
+
+message RheemInput{
+  optional RheemPlan rplan = 1;
+  optional RheemContext rctx = 2;
 }
