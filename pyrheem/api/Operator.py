@@ -4,7 +4,8 @@ class Operator:
     # agregar slot e input output slots
     # el protocolbuffer trabajara sobre esta clase para producir un operator_seed basado en operator_base!
 
-    def __init__(self, kind="kind", udf=None, previous=None, iterator=None, sink=False, boundary_operators=None, wrapper=None):
+    def __init__(self, kind="kind", udf=None, previous=None, iterator=None,
+                 sink=False, boundary_operators=None, wrapper=None):
         self.kind = kind
         self.previous = []
         self.previous.append(previous)
@@ -24,7 +25,7 @@ class Operator:
         self.wrapper = wrapper
 
         print(str(self.getID()) + " " + self.kind, ", is boundary: ", self.is_boundary, ", is source: ",
-        self.source, ", is sink: ", self.sink)
+        self.source, ", is sink: ", self.sink, " wrapper: ", self.wrapper)
 
         self.successor = []
         self.predecessor = []

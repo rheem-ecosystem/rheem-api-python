@@ -60,7 +60,8 @@ class DataQuanta:
                 udf=func,
                 previous=self.operator,
                 sink=True,
-                boundary_operators=self.plan.get_boundary_operators()
+                boundary_operators=self.plan.get_boundary_operators(),
+                wrapper="URL,end"
             ),
             plan=self.plan
         )

@@ -16,7 +16,8 @@ class DataQuantaBuilder:
                 kind="source",
                 udf=source,
                 iterator=iter(source_ori),
-                boundary_operators=self.plan.get_boundary_operators()
+                boundary_operators=self.plan.get_boundary_operators(),
+                wrapper="URL"
             ),
             self.plan
         )
