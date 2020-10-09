@@ -48,8 +48,19 @@ public class Receiver {
     private static void createExecutablePlan(RheemPlan plan) {
         RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
 
+        /**
+         * Contains OperatorSeedRef, each includes Slot positions that are being used by another Operators
+         * ordinalInputs and ordinalOutputs indicates which position on InputSlots or OutputSlots (Given by value)
+         * is used by a related Operator (Given by Key)
+         */
         Map<Long, OperatorSeedRef> dict_seed = new HashMap<Long, OperatorSeedRef>();
+
+        /**
+         * Contains OperatorBase executable implementations (E.g. FilterOperator)
+         */
         Map<Long, OperatorBase> dict_rheem = new HashMap<Long, OperatorBase>();
+
+        //TODO Can this work with multiple sinks?
         List<OperatorSeedRef> sinks = new ArrayList<>();
         OperatorBase sink = null;
 
@@ -67,6 +78,7 @@ public class Receiver {
                     )
             );
 
+            // Creating RheemOperators, at this step they are not connected
             OperatorBase rheemOp;
             switch (seed.getKind()) {
                 case "source":
