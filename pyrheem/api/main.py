@@ -126,6 +126,80 @@ def map_partition(collected, plan):
 
     pass
 
+def simple_plan(collected, plan):
+
+    last = None
+    sources = []
+    sinks = []
+    wrapper = ""
+    for pipe in collected:
+        print("separador")
+        last = None
+        wrapper = ""
+        sources = []
+        sinks = []
+        for node in reversed(pipe):
+            if node.operator.is_source():
+                print(node.id, "Ignoring", node.operator.udf)
+                sources.append(node.operator)
+            elif node.operator.udf is not None:
+                if node.operator.is_sink():
+                    print(node.id, "Ignoring", node.operator.udf)
+                    sinks.append(node.operator)
+                    pass
+                elif last is not None:
+                    print(node.id, "getting serialized udf", node.operator.udf)
+                    last = pipeline_func(last, node.operator.udf)
+                    wrapper += "|" + node.operator.wrapper
+                else:
+                    print(node.id, "getting serialized udf", node.operator.udf)
+                    last = node.operator.udf
+                    wrapper = node.operator.wrapper
+                pass
+        # At this point, last is the cncatenation of every operator in the pipe
+        print("last", last)
+    print("last last", last)
+    source = None
+    sink = None
+    for x in sources:
+        print("source", x.kind)
+        source = Operator(
+            kind="source",
+            udf=cloudpickle.dumps(x.udf),
+            previous=None,
+            boundary_operators=plan.get_boundary_operators(),
+            wrapper=x.wrapper
+        )
+    op_pipe = Operator(
+        kind="composite",
+        udf=cloudpickle.dumps(last),
+        previous=source,
+        boundary_operators=plan.get_boundary_operators(),
+        wrapper=wrapper
+    )
+    for x in sinks:
+        print("sink", x.kind)
+        sink = Operator(
+            kind="sink",
+            udf=cloudpickle.dumps(x.udf),
+            previous=op_pipe,
+            boundary_operators=plan.get_boundary_operators(),
+            sink=True,
+            wrapper=x.wrapper
+        )
+
+    source.set_successor(op_pipe)
+    op_pipe.set_predecessor(source)
+    op_pipe.set_successor(sink)
+    sink.set_predecessor(op_pipe)
+
+    operators = [source, op_pipe, sink]
+
+    rmb = RheemMessageBuilder(operators)
+
+
+    pass
+
 if __name__ == '__main__':
 
     use_graph = 1
@@ -183,9 +257,14 @@ if __name__ == '__main__':
 
             return current_pipeline
 
+        def plan_to_list(node, current_list, collection):
+            if node.operator not in collection:
+                node.operator.serialize_udf()
+                collection.append(node.operator)
+            return None
 
         # Works over the graph
-        trans = Transversal(
+        """trans = Transversal(
             graph=graph,
             origin=plan.sources,
             # udf=lambda x, y, z: d(x, y, z)
@@ -199,5 +278,25 @@ if __name__ == '__main__':
         collected = trans.get_collected_data()
 
         map_partition(collected, plan)
+"""
+        # Works over the graph
+        simple_list = Transversal(
+            graph=graph,
+            origin=plan.sources,
+            # udf=lambda x, y, z: d(x, y, z)
+            # UDF always will receive:
+            # x: a Node object,
+            # y: an object representing the result of the last iteration,
+            # z: a collection to store final results inside your UDF
+            udf=lambda x, y, z: plan_to_list(x, y, z)
+        )
+
+        list = simple_list.get_collected_data()
+
+        print("simple_list")
+        for i in list:
+            print(i.kind, i.successor)
+
+        RheemMessageBuilder(list)
 
         # Quitar filter como boundary, guardar las en map partition

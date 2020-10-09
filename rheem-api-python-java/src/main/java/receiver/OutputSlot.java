@@ -45,7 +45,7 @@ public class OutputSlot<T> extends Slot<T> {
     /**
      * Take the output connections away from one operator and give them to another one.
      */
-    /*TODO numoutputs, como se llena?
+
     public static void stealConnections(OperatorSeedRef victim, OperatorSeedRef thief) {
         if (victim.getNumOutputs() != thief.getNumOutputs()) {
             throw new IllegalArgumentException("Cannot steal outputs: Mismatching number of outputs.");
@@ -54,8 +54,11 @@ public class OutputSlot<T> extends Slot<T> {
         for (int i = 0; i < victim.getNumOutputs(); i++) {
             thief.getOutput(i).unchecked().stealOccupiedSlots(victim.getOutput(i).unchecked());
         }
-    }*/
+    }
 
+    public OutputSlot<Object> unchecked() {
+        return (OutputSlot<Object>) this;
+    }
 
     /**
      * Takes away the occupied {@link InputSlot}s of the {@code victim} and connects it to this instance.

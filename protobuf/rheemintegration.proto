@@ -34,7 +34,7 @@ message RheemPlan{
   repeated OperatorSeed operators = 1;
 }
 
-message RheemContext{
+message RheemContextRef{
 
   enum Platform{
     spark = 0;
@@ -47,5 +47,5 @@ message RheemContext{
 
 message RheemInput{
   optional RheemPlan rplan = 1;
-  optional RheemContext rctx = 2;
+  optional RheemContextRef rctx = 2;
 }

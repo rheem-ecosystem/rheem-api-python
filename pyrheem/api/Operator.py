@@ -1,3 +1,4 @@
+import cloudpickle
 
 class Operator:
 
@@ -35,6 +36,10 @@ class Operator:
             for prev in self.previous:
                 if prev is not None:
                     prev.set_successor(self)
+                    self.set_predecessor(prev)
+
+        if self.is_sink():
+            self.successor = []
 
     def is_source(self):
         return self.source
@@ -58,3 +63,6 @@ class Operator:
     def set_predecessor(self, suc):
         if self.predecessor.count(suc) == 0:
             self.predecessor.append(suc)
+
+    def serialize_udf(self):
+        self.udf = cloudpickle.dumps(self.udf)

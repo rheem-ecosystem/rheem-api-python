@@ -23,7 +23,7 @@ class DataQuanta:
                 previous=self.operator,
                 #sink=True,
                 boundary_operators=self.plan.get_boundary_operators(),
-                wrapper="Function(u,t)"
+                wrapper="transform"
             ),
             plan=self.plan
         )
@@ -39,7 +39,7 @@ class DataQuanta:
                 previous=self.operator,
                 #sink=True,
                 boundary_operators=self.plan.get_boundary_operators(),
-                wrapper="Predicate<u>"
+                wrapper="predicate"
             ),
             plan=self.plan
         )

@@ -51,6 +51,22 @@ public class OperatorSeedRef {
 
     }
 
+    public long getId() {
+        return id;
+    }
+
+    public String getKind() {
+        return kind;
+    }
+
+    public ByteString getUdf() {
+        return udf;
+    }
+
+    public String getWrapper() {
+        return wrapper;
+    }
+
     public InputSlot[] getAllInputs() {
         return this.inputSlots;
     }
@@ -143,4 +159,5 @@ public class OperatorSeedRef {
     public Map<Long, Integer> getOrdinalOutputs() {
         return ordinalOutputs;
     }
+
 }
