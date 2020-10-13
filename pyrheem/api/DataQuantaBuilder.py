@@ -7,10 +7,12 @@ class DataQuantaBuilder:
         self.plan = plan
 
     def source(self, source):
-        if type(source) is str:
-            source_ori = open(source, "r")
-        else:
-            source_ori = source
+
+        #Uncomment to execute here directly
+        #if type(source) is str:
+        #    source_ori = open(source, "r")
+        #else:
+        source_ori = source
         return DataQuanta(
             Operator(
                 kind="source",

@@ -127,7 +127,7 @@ def compress_stages(collected, plan):
 
 if __name__ == '__main__':
 
-    use_graph = 1
+    use_composite = 2
 
     # Plan will contain general info about the Rheem Plan created here
     plan = PlanDescriptor()
@@ -143,15 +143,19 @@ if __name__ == '__main__':
         #.execute()
         #.console()
 
-    graph = rheem.source("/Users/rodrigopardomeza/PycharmProjects/rheem-python/python-api/Operator.py") \
+    """graph = rheem.source("/Users/rodrigopardomeza/PycharmProjects/rheem-python/python-api/Operator.py") \
         .filter(lambda s: "class" in s) \
         .map(lambda s: "papurri " + s) \
-        .sink(path="/Users/rodrigopardomeza/scalytics/rheem-api-python/pyrheem/localresults/localtest.txt", end="") \
-        .create_graph()
+        .sink(path="/Users/rodrigopardomeza/scalytics/rheem-api-python/pyrheem/localresults/localtest.txt", end="") \""""
+        #.create_graph()
         #.execute()
 
+    #graph2 = rheem.source("pepito").map(lambda y: y * 2).sink("peputo").create_graph()
 
-    if use_graph == 1:
+    graph3 = rheem.source("pepito").filter(lambda y: y == y.lower()).sink("peputo").create_graph()
+
+
+    if use_composite == 1:
         def define_pipelines(node1, current_pipeline, collection):
             def store_unique(pipe_to_insert):
                 for pipe in collection:
@@ -182,12 +186,6 @@ if __name__ == '__main__':
 
             return current_pipeline
 
-        def plan_to_list(node, current_list, collection):
-            if node.operator not in collection:
-                node.operator.serialize_udf()
-                collection.append(node.operator)
-            return None
-
         # Works over the graph
         """trans = Transversal(
             graph=graph,
@@ -204,9 +202,17 @@ if __name__ == '__main__':
 
         compress_stages(collected, plan)
 """
+    elif use_composite == 2:
         # Works over the graph
+
+        def plan_to_list(node, current_list, collection):
+            if node.operator not in collection:
+                node.operator.serialize_udf()
+                collection.append(node.operator)
+            return None
+
         simple_list = Transversal(
-            graph=graph,
+            graph=graph3,
             origin=plan.sources,
             # udf=lambda x, y, z: d(x, y, z)
             # UDF always will receive:
@@ -223,5 +229,3 @@ if __name__ == '__main__':
             print(i.kind, i.successor)
 
         RheemMessageBuilder(list)
-
-        # Quitar filter como boundary, guardar las en map partition

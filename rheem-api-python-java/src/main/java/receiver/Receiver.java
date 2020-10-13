@@ -30,7 +30,7 @@ public class Receiver {
         RheemPlan plan = RheemPlan.parseFrom(new FileInputStream(args[0]));
 
         print(plan);
-        createExecutablePlan(plan);
+        //createExecutablePlan(plan);
 
         /*RheemContext rheemContext = new RheemContext().with(Java.basicPlugin());
         TextFileSource op1 = OperatorConvertor.createTextFileSourceOperator(new byte[0], "url");
